@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#142b3b"><title>Asan Khata — Easy Room Ledger</title>
+<style>
+:root{--navy:#142b3b;--teal:#1d8a78;--bg:#f3f6f8;--card:#fff;--text:#172b38;--muted:#71818b;--line:#e5ebef;--red:#c84d4d;--gold:#d99b32}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Inter,system-ui,Segoe UI,Arial,sans-serif}
+header{background:var(--navy);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:800;letter-spacing:.3px}.brand span{color:#69d2b6}.sub{font-size:12px;color:#c4d2da}
+.top-actions{display:flex;gap:8px;align-items:center}.pill{border:1px solid #ffffff40;border-radius:20px;padding:6px 11px;font-size:12px;color:#e7f0f4}
+button,.btn{border:0;border-radius:9px;background:var(--teal);color:#fff;padding:10px 14px;font-weight:650;cursor:pointer}button.secondary{background:#eaf1f3;color:var(--navy)}button.danger{background:#fff0f0;color:var(--red)}button:disabled{opacity:.5;cursor:not-allowed}
+nav{display:flex;gap:5px;padding:12px 22px;background:#fff;border-bottom:1px solid var(--line);overflow:auto}
+nav button{background:transparent;color:var(--muted);white-space:nowrap;padding:9px 13px}nav button.active{background:#e7f4f1;color:#116d5e}
+main{max-width:1200px;margin:22px auto;padding:0 18px}.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.two{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:0 2px 8px #18334408}
+.label{font-size:12px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.5px}.metric{font-size:26px;font-weight:800;margin-top:5px}.hint{font-size:12px;color:var(--muted);margin-top:3px}
+h2{font-size:19px;margin:0 0 14px}h3{font-size:15px;margin:0 0 12px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px 0 12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--muted);font-weight:650;background:#f8fafb}td,th{padding:10px 9px;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:0}.right{text-align:right}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}input,select,textarea{width:100%;padding:10px;border:1px solid #dce5e9;border-radius:8px;background:#fff;color:var(--text);font:inherit}input:focus,select:focus{outline:2px solid #b8e5da;border-color:var(--teal)}.full{grid-column:1/-1}.form-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.member-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.member{border:1px solid var(--line);border-radius:10px;padding:12px}.member strong{display:block}.badge{font-size:11px;border-radius:20px;padding:3px 8px;background:#e8f4f1;color:#16705f}.negative{color:var(--red)}.positive{color:var(--teal)}
+.notice{padding:12px 14px;border-radius:10px;background:#fff8e9;border:1px solid #f3dfb5;color:#76551b;font-size:13px;margin-bottom:14px}
+.empty{color:var(--muted);padding:18px;text-align:center}.small{font-size:12px;color:var(--muted)}.sync{display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:#d99b32}.dot.on{background:#42bd8f}
+footer{max-width:1200px;margin:25px auto;padding:0 18px 30px;color:var(--muted);font-size:12px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.member-list{grid-template-columns:repeat(2,1fr)}main{margin:14px auto}header{padding:15px 17px}}
+@media(max-width:480px){.grid{gap:8px}.card{padding:13px}.metric{font-size:21px}.member-list{grid-template-columns:1fr 1fr}form{grid-template-columns:1fr}.full{grid-column:auto}nav{padding:9px 10px}nav button{padding:8px 10px;font-size:13px}}
+</style>
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1f6feb"><link rel="apple-touch-icon" href="icon-192.png"><script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js")</script></head>
+<body>
+<header><div><div class="brand">Asan <span>Khata</span></div><div class="sub">One room · Six roommates · Shared accountability</div></div>
+<div class="top-actions"><span class="pill sync"><i class="dot" id="syncDot"></i><span id="syncText">Demo mode · this device only</span></span><button class="secondary" id="settingsBtn">Cloud setup</button></div></header>
+<nav id="tabs">
+<button class="active" data-page="dashboard">Overview</button><button data-page="finance">Finance & ledgers</button><button data-page="transactions">Transactions</button><button data-page="duties">Weekly duties</button><button data-page="kitchen">Kitchen & menu</button><button data-page="members">Roommates</button><button data-page="closing">Monthly closing</button>
+</nav>
+<main>
+<section id="dashboard" class="page active">
+<div class="notice" id="modeNotice">Demo mode: data is saved on this device. Connect a shared Supabase database in <b>Cloud setup</b> to synchronise transactions across everyone's phones and computers.</div>
+<div class="grid">
+<div class="card"><div class="label">Room cash balance</div><div class="metric" id="cashBalance">Rs 0</div><div class="hint">Contributions minus recorded expenses</div></div>
+<div class="card"><div class="label">This week's contributions</div><div class="metric" id="weekContrib">Rs 0</div><div class="hint">Money received this week</div></div>
+<div class="card"><div class="label">This month's expenses</div><div class="metric" id="monthExpenses">Rs 0</div><div class="hint">All recorded room spending</div></div>
+<div class="card"><div class="label">Members with dues</div><div class="metric" id="duesCount">0 / 6</div><div class="hint">Negative individual balance</div></div>
+</div>
+<div class="two"><div class="card"><h2>Room financial position</h2><div id="balanceRows"></div></div><div class="card"><h2>Today's room plan</h2><div id="todayPlan"></div><div class="section-head"><h3>Next cooking duty</h3><span class="badge" id="dutyBadge">Weekly rotation</span></div><div id="nextDuty" class="small"></div></div></div>
+<div class="section-head"><h2>Recent activity</h2><button class="secondary" onclick="showPage('transactions')">View all</button></div><div class="card" id="recent"></div>
+</section>
+<section id="finance" class="page">
+<div class="section-head"><h2>Finance & individual ledgers</h2><span class="badge">Equal split across 6 people</span></div>
+<div class="notice">Ledger logic: every contribution is credited to that roommate; every shared expense is divided equally across all six. A positive balance means the person has contributed more than their share; a negative balance means they owe the room.</div>
+<div class="card"><h3>Weekly contribution</h3><form id="contributionForm"><div><label>Roommate</label><select id="contribMember"></select></div><div><label>Amount (PKR)</label><input id="contribAmount" type="number" min="1" required placeholder="e.g. 1500"></div><div><label>Date received</label><input id="contribDate" type="date" required></div><div><label>Received by (optional)</label><input id="contribNote" placeholder="Name / reference"></div><div class="full form-actions"><button>Add contribution</button><span class="small">Visible to every connected roommate</span></div></form></div>
+<div class="section-head"><h2>Individual balances</h2></div><div class="card" id="ledgerTable"></div>
+</section>
+<section id="transactions" class="page">
+<div class="section-head"><h2>Shared transaction register</h2><span class="badge">Live shared record</span></div>
+<div class="notice" id="entryLockNotice">Transaction entry is locked. The designated manager must unlock it from Cloud setup.</div><div class="two"><div class="card"><h3>Record an expense</h3><form id="expenseForm"><div><label>Category</label><select id="expenseCategory"><option>Groceries</option><option>Gas</option><option>Electricity</option><option>Water</option><option>Cleaning</option><option>Internet</option><option>Other</option></select></div><div><label>Amount (PKR)</label><input id="expenseAmount" type="number" min="1" required placeholder="e.g. 2400"></div><div><label>Date</label><input id="expenseDate" type="date" required></div><div><label>Paid by</label><select id="expenseMember"></select></div><div class="full"><label>Description / shop</label><input id="expenseDescription" required placeholder="e.g. Weekly groceries from main bazaar"></div><div class="full form-actions"><button>Save expense</button></div></form></div>
+<div class="card"><h3>How shared transactions work</h3><p class="small">Every contribution and expense is entered once in the common register. With cloud sync enabled, all six roommates see the same updated record. No single money manager needs to privately maintain a separate book.</p><p class="small"><b>Audit trail:</b> each record stores who entered it and when. Avoid deleting transactions; add a correcting entry if something was recorded incorrectly.</p></div></div>
+<div class="section-head"><h2>All transactions</h2><select id="transactionFilter" style="max-width:180px"><option value="all">All categories</option><option value="contribution">Contributions</option><option value="expense">Expenses</option></select></div><div class="card" id="transactionTable"></div>
+</section>
+<section id="duties" class="page">
+<div class="section-head"><h2>Weekly duty rotation</h2><span class="badge">Six-person rotation</span></div>
+<div class="notice">The app assigns one duty owner per task for each week. The starting person rotates weekly, so duties are shared fairly over time. Edit the task list or rotation start date in the setup section below.</div>
+<div class="card"><h3>This week's roster</h3><div id="dutyTable"></div></div>
+<div class="card" style="margin-top:14px"><h3>Duty tasks</h3><form id="dutyForm"><div class="full"><label>Add a duty</label><input id="dutyName" required placeholder="e.g. Take out rubbish"></div><div class="full form-actions"><button>Add duty</button></div></form><div id="dutyTasks" style="margin-top:12px"></div></div>
+</section>
+<section id="kitchen" class="page">
+<div class="section-head"><h2>Kitchen & weekly menu</h2><span class="badge">Meal planning</span></div>
+<div class="two"><div class="card"><h3>Weekly menu</h3><form id="menuForm"><div><label>Day</label><select id="menuDay"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div><div><label>Meal</label><select id="menuMeal"><option>Breakfast</option><option>Lunch</option><option>Dinner</option></select></div><div class="full"><label>Menu item</label><input id="menuItem" required placeholder="e.g. Daal chawal"></div><div class="full form-actions"><button>Save menu</button></div></form><div id="menuTable" style="margin-top:15px"></div></div>
+<div class="card"><h3>Grocery list</h3><form id="groceryForm"><div class="full"><label>Item</label><input id="groceryItem" required placeholder="e.g. 5 kg flour"></div><div><label>Quantity / notes</label><input id="groceryQty" placeholder="5 kg"></div><div class="form-actions" style="align-items:end"><button>Add item</button></div></form><div id="groceryList" style="margin-top:12px"></div></div></div>
+</section>
+<section id="members" class="page">
+<div class="section-head"><h2>Roommates</h2><span class="badge">6 members</span></div>
+<div class="notice">Replace the default names with your actual roommates' names. Changes are shared when cloud sync is connected.</div>
+<div class="card"><form id="memberForm"><div><label>Roommate 1</label><input id="m0" required></div><div><label>Roommate 2</label><input id="m1" required></div><div><label>Roommate 3</label><input id="m2" required></div><div><label>Roommate 4</label><input id="m3" required></div><div><label>Roommate 5</label><input id="m4" required></div><div><label>Roommate 6</label><input id="m5" required></div><div class="full form-actions"><button>Save roommates</button></div></form></div>
+<div class="section-head"><h2>Room directory</h2></div><div class="member-list" id="memberCards"></div>
+</section>
+<section id="closing" class="page">
+<div class="section-head"><h2>Monthly closing</h2><span class="badge">Month-end statement</span></div>
+<div class="notice">Select a month to review contributions, expenses, closing cash and each roommate’s net position. Closing a month saves a snapshot and locks new transactions dated in that month.</div>
+<div class="card"><form id="closingForm"><div><label>Accounting month</label><input type="month" id="closingMonth" required></div><div class="form-actions" style="align-items:end"><button type="button" id="previewClose" class="secondary">Preview statement</button><button type="button" id="closeMonthBtn">Close month</button></div></form></div>
+<div id="closingStatement" class="card" style="margin-top:14px"><div class="empty">Choose a month and preview its statement.</div></div>
+<div class="section-head"><h2>Closed months</h2></div><div class="card" id="closedMonths"><div class="empty">No months closed yet.</div></div>
+</section>
+<section id="settings" class="page">
+<div class="section-head"><h2>Cloud synchronisation setup</h2></div>
+<div class="notice">For genuine multi-device sync, create one free Supabase project, run the included SQL schema, then paste the project URL and anon key here. Use the same setup on every device. The app does not send data to a server until you configure this.</div>
+<div class="card" style="margin-bottom:14px"><h3>Transaction manager access</h3><p class="small">Only the designated manager should enter contributions and expenses. Set a manager PIN, then unlock transaction entry on the manager’s device. This starter PIN is a convenience lock, not strong server-side security; enforceable roles require authenticated accounts and database policies.</p><form id="pinForm"><div><label>Set / change manager PIN</label><input id="managerPin" type="password" minlength="4" placeholder="At least 4 digits or characters"></div><div class="form-actions" style="align-items:end"><button>Save manager PIN</button><button type="button" class="secondary" id="lockManager">Lock entry</button></div></form><p id="managerStatus" class="small"></p></div><div class="card"><form id="cloudForm"><div class="full"><label>Supabase project URL</label><input id="supabaseUrl" placeholder="https://your-project.supabase.co"></div><div class="full"><label>Supabase anon / publishable key</label><input id="supabaseKey" placeholder="sb_publishable_... or anon key"></div><div class="full form-actions"><button>Connect & sync</button><button type="button" class="secondary" id="disconnectBtn">Disconnect cloud</button></div></form><p class="small">Never paste a service-role key here. The included SQL enables shared room data access for anyone with the app's project credentials; only share the app with your six roommates.</p></div>
+<div class="card" style="margin-top:14px"><h3>Important setup steps</h3><ol class="small"><li>Create a project at Supabase.</li><li>Open SQL Editor and run <b>schema.sql</b> from the downloaded project.</li><li>Copy the Project URL and anon/publishable key from Project Settings → API.</li><li>Paste both above on one device, connect, then use the same URL/key on all other devices.</li><li>Deploy this folder to a static host (for example, Netlify or Vercel) so all phones and PCs can open the same app address.</li></ol></div>
+</section>
+</main><footer>Asan Khata · Shared room records · Keep receipts for verification. Cloud sync is available after Supabase configuration.</footer>
+<script src="supabase.js"></script>
+<script>
+const DEFAULT={members:["Roommate 1","Roommate 2","Roommate 3","Roommate 4","Roommate 5","Roommate 6"],transactions:[],duties:["Cooking","Washing dishes","Room cleaning","Grocery shopping","Taking out rubbish","Kitchen cleaning"],menu:[],groceries:[],closedMonths:{},dutyStart:"2026-11-24"};
+let db={...DEFAULT,...(JSON.parse(localStorage.getItem("roomsync-data")||"null")||{})}, supa=null, channel=null, managerUnlocked=false; db.closedMonths=db.closedMonths||{};
+const $=id=>document.getElementById(id), today=()=>new Date().toISOString().slice(0,10), money=n=>"Rs "+Number(n||0).toLocaleString("en-PK",{maximumFractionDigits:2});
+function saveLocal(){localStorage.setItem("roomsync-data",JSON.stringify(db))}
+function weekStart(d=new Date()){let x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.toISOString().slice(0,10)}
+function monthStart(){return today().slice(0,7)}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function membersOptions(){return db.members.map((m,i)=>`<option value="${i}">${escapeHtml(m)}</option>`).join("")}
+function managerGate(){const ok=!!localStorage.getItem("roomsync-manager-pin")&&managerUnlocked;$("entryLockNotice").style.display=ok?"none":"block";document.querySelectorAll("#contributionForm input,#contributionForm select,#contributionForm button,#expenseForm input,#expenseForm select,#expenseForm button").forEach(el=>el.disabled=!ok);$("managerStatus").textContent=ok?"Transaction entry is unlocked on this device.":"Transaction entry is locked on this device."}
+function monthSummary(month){
+ const ts=db.transactions.filter(t=>t.date.startsWith(month)), inc=ts.filter(t=>t.type==="contribution"),out=ts.filter(t=>t.type==="expense");
+ const totalIn=inc.reduce((a,t)=>a+ +t.amount,0),totalOut=out.reduce((a,t)=>a+ +t.amount,0);
+ const rows=db.members.map((name,i)=>{const paid=inc.filter(t=>+t.member===i).reduce((a,t)=>a+ +t.amount,0);return {name,paid,share:totalOut/6,net:paid-totalOut/6}});
+ return {month,totalIn,totalOut,net:totalIn-totalOut,rows,transactions:ts.length};
+}
+function previewClosing(){
+ const m=$("closingMonth").value;if(!m)return;const x=monthSummary(m),closed=db.closedMonths[m];
+ $("closingStatement").innerHTML=`<h3>Statement · ${m}</h3><div class="grid"><div><div class="label">Contributions</div><b>${money(x.totalIn)}</b></div><div><div class="label">Expenses</div><b>${money(x.totalOut)}</b></div><div><div class="label">Net cash movement</div><b>${money(x.net)}</b></div><div><div class="label">Transactions</div><b>${x.transactions}</b></div></div><h3 style="margin-top:18px">Roommate ledger summary</h3><table><thead><tr><th>Roommate</th><th class="right">Paid</th><th class="right">Expense share</th><th class="right">Net</th></tr></thead><tbody>${x.rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td class="right">${money(r.paid)}</td><td class="right">${money(r.share)}</td><td class="right ${r.net<0?'negative':'positive'}">${money(r.net)}</td></tr>`).join("")}</tbody></table><p class="small">${closed?"Status: CLOSED · Snapshot saved "+escapeHtml(closed.closedAt):"Status: OPEN · Preview only; not yet closed."}</p><button class="secondary" onclick="window.print()">Print statement</button>`;
+}
+function renderClosedMonths(){$("closedMonths").innerHTML=Object.keys(db.closedMonths||{}).length?`<table><thead><tr><th>Month</th><th>Closed at</th><th>Closing cash movement</th></tr></thead><tbody>${Object.entries(db.closedMonths).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,c])=>`<tr><td>${m}</td><td>${new Date(c.closedAt).toLocaleString()}</td><td>${money(c.net)}</td></tr>`).join("")}</tbody></table>`:'<div class="empty">No months closed yet.</div>'}
+function render(){
+ $("contribMember").innerHTML=membersOptions();$("expenseMember").innerHTML=membersOptions();
+ db.members.forEach((m,i)=>$("m"+i).value=m);
+ const contrib=db.transactions.filter(t=>t.type==="contribution"), expenses=db.transactions.filter(t=>t.type==="expense");
+ const totalIn=contrib.reduce((s,t)=>s+ +t.amount,0),totalOut=expenses.reduce((s,t)=>s+ +t.amount,0);
+ $("cashBalance").textContent=money(totalIn-totalOut);
+ $("weekContrib").textContent=money(contrib.filter(t=>t.date>=weekStart()).reduce((s,t)=>s+ +t.amount,0));
+ $("monthExpenses").textContent=money(expenses.filter(t=>t.date.startsWith(monthStart())).reduce((s,t)=>s+ +t.amount,0));
+ const balances=db.members.map((m,i)=>({m,amount:contrib.filter(t=>+t.member===i).reduce((s,t)=>s+ +t.amount,0)-totalOut/6}));
+ $("duesCount").textContent=balances.filter(x=>x.amount<-.009).length+" / 6";
+ $("balanceRows").innerHTML=`<table><thead><tr><th>Roommate</th><th class="right">Net balance</th></tr></thead><tbody>${balances.map(x=>`<tr><td>${escapeHtml(x.m)}</td><td class="right ${x.amount<0?'negative':'positive'}">${money(x.amount)}</td></tr>`).join("")}</tbody></table>`;
+ $("ledgerTable").innerHTML=`<table><thead><tr><th>Roommate</th><th class="right">Contributed</th><th class="right">Share of expenses</th><th class="right">Net balance</th></tr></thead><tbody>${balances.map((x,i)=>{let c=contrib.filter(t=>+t.member===i).reduce((s,t)=>s+ +t.amount,0);return `<tr><td>${escapeHtml(x.m)}</td><td class="right">${money(c)}</td><td class="right">${money(totalOut/6)}</td><td class="right ${x.amount<0?'negative':'positive'}">${money(x.amount)}</td></tr>`}).join("")}</tbody></table><p class="small">Balances are calculated from all recorded contributions and an equal one-sixth share of every shared expense.</p>`;
+ const sorted=[...db.transactions].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt));
+ const rows=arr=>arr.length?`<table><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Person</th><th class="right">Amount</th></tr></thead><tbody>${arr.map(t=>`<tr><td>${escapeHtml(t.date)}</td><td>${t.type==="contribution"?"Contribution":"Expense"}</td><td>${escapeHtml(t.description)}</td><td>${escapeHtml(db.members[+t.member]||"—")}</td><td class="right">${money(t.amount)}</td></tr>`).join("")}</tbody></table>`:'<div class="empty">No transactions recorded yet.</div>';
+ $("recent").innerHTML=rows(sorted.slice(0,5));let f=$("transactionFilter").value; $("transactionTable").innerHTML=rows(sorted.filter(t=>f==="all"||t.type===f));
+ const offset=Math.floor((new Date(weekStart())-new Date(db.dutyStart))/(7*86400000));const rotation=((offset%6)+6)%6;
+ $("dutyTable").innerHTML=`<table><thead><tr><th>Duty</th><th>Assigned roommate</th></tr></thead><tbody>${db.duties.map((d,i)=>`<tr><td>${escapeHtml(d)}</td><td>${escapeHtml(db.members[(rotation+i)%6])}</td></tr>`).join("")}</tbody></table>`;
+ $("dutyTasks").innerHTML=db.duties.map((d,i)=>`<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid var(--line)">${escapeHtml(d)}<button class="danger" onclick="removeDuty(${i})">Remove</button></div>`).join("");
+ const day=new Date().toLocaleDateString("en-US",{weekday:"long"});const todayMenus=db.menu.filter(m=>m.day===day);
+ $("todayPlan").innerHTML=todayMenus.length?todayMenus.map(m=>`<p><b>${m.meal}:</b> ${escapeHtml(m.item)}</p>`).join(""):'<p class="small">No menu entered for today.</p>';
+ $("nextDuty").textContent=db.duties.length?`${db.duties[rotation%Math.max(1,db.duties.length)]||"—"} · ${db.members[rotation]}`:"No duties added";
+ const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+ $("menuTable").innerHTML=db.menu.length?`<table><thead><tr><th>Day</th><th>Meal</th><th>Menu</th><th></th></tr></thead><tbody>${db.menu.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)).map((m,i)=>`<tr><td>${m.day}</td><td>${m.meal}</td><td>${escapeHtml(m.item)}</td><td><button class="danger" onclick="removeMenu(${i})">×</button></td></tr>`).join("")}</tbody></table>`:'<div class="empty">No menu planned yet.</div>';
+ $("groceryList").innerHTML=db.groceries.length?db.groceries.map((g,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><input type="checkbox" style="width:auto" ${g.done?'checked':''} onchange="toggleGrocery(${i})"><span style="flex:1;${g.done?'text-decoration:line-through;color:#8b999f':''}">${escapeHtml(g.item)} <small>${escapeHtml(g.qty||"")}</small></span><button class="danger" onclick="removeGrocery(${i})">×</button></div>`).join(""):'<div class="empty">Your shopping list is empty.</div>';
+ $("memberCards").innerHTML=db.members.map((m,i)=>`<div class="member"><strong>${escapeHtml(m)}</strong><span class="small">Roommate ${i+1}</span><div class="small" style="margin-top:7px">Net balance: <b>${money(balances[i].amount)}</b></div></div>`).join("");
+}
+async function cloudLoad(){if(!supa)return;const {data,error}=await supa.from("room_data").select("payload").eq("id",1).maybeSingle();if(error)throw error;if(data?.payload){db={...DEFAULT,...data.payload};saveLocal();render()}else{const {error:e}=await supa.from("room_data").insert({id:1,payload:db});if(e)throw e}}
+async function cloudSave(){saveLocal();if(!supa)return;const {error}=await supa.from("room_data").upsert({id:1,payload:db});if(error){alert("Cloud save failed: "+error.message);return} }
+function updateSync(on){$("syncDot").className="dot"+(on?" on":"");$("syncText").textContent=on?"Cloud sync connected":"Demo mode · this device only";$("modeNotice").style.display=on?"none":"block"}
+function addTx(t){if(!managerUnlocked){alert("Only the transaction manager can enter records. Unlock entry first.");return}if(db.closedMonths?.[t.date.slice(0,7)]){alert("This accounting month is closed. Reopen is not available in this starter version.");return}db.transactions.push({...t,id:crypto.randomUUID(),createdAt:new Date().toISOString(),enteredBy:"Room member"});cloudSave();render()}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+function showPage(p){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));$(p).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p))}
+$("settingsBtn").onclick=()=>showPage("settings");
+$("pinForm").onsubmit=e=>{e.preventDefault();const pin=$("managerPin").value;if(pin.length<4){alert("Use at least 4 characters.");return}localStorage.setItem("roomsync-manager-pin",pin);managerUnlocked=true;$("managerPin").value="";managerGate();alert("Manager PIN saved. Entry is unlocked on this device.")};
+$("lockManager").onclick=()=>{managerUnlocked=false;managerGate()};
+$("previewClose").onclick=previewClosing;
+$("closeMonthBtn").onclick=()=>{const m=$("closingMonth").value;if(!m)return alert("Choose a month first.");if(!managerUnlocked)return alert("Only the manager can close a month. Unlock transaction entry first.");if(db.closedMonths[m])return alert("This month is already closed.");if(!confirm("Close "+m+"? This saves a month-end snapshot and blocks new transactions dated in this month."))return;const x=monthSummary(m);db.closedMonths[m]={...x,closedAt:new Date().toISOString()};cloudSave();previewClosing();renderClosedMonths();alert("Month closed successfully.")};
+$("contribDate").value=today();$("expenseDate").value=today();$("closingMonth").value=today().slice(0,7);
+$("contributionForm").onsubmit=e=>{e.preventDefault();addTx({type:"contribution",member:$("contribMember").value,amount:+$("contribAmount").value,date:$("contribDate").value,description:"Weekly contribution"+($("contribNote").value?" · "+$("contribNote").value:"")});e.target.reset();$("contribDate").value=today()};
+$("expenseForm").onsubmit=e=>{e.preventDefault();addTx({type:"expense",member:$("expenseMember").value,amount:+$("expenseAmount").value,date:$("expenseDate").value,description:$("expenseCategory").value+" · "+$("expenseDescription").value});e.target.reset();$("expenseDate").value=today()};
+$("transactionFilter").onchange=render;
+$("memberForm").onsubmit=e=>{e.preventDefault();db.members=Array.from({length:6},(_,i)=>$("m"+i).value.trim()||"Roommate "+(i+1));cloudSave();render();alert("Roommate names saved.")};
+$("dutyForm").onsubmit=e=>{e.preventDefault();db.duties.push($("dutyName").value.trim());$("dutyName").value="";cloudSave();render()};
+function removeDuty(i){db.duties.splice(i,1);cloudSave();render()}
+$("menuForm").onsubmit=e=>{e.preventDefault();let x={day:$("menuDay").value,meal:$("menuMeal").value,item:$("menuItem").value.trim()};db.menu=db.menu.filter(m=>!(m.day===x.day&&m.meal===x.meal));db.menu.push(x);$("menuItem").value="";cloudSave();render()};
+function removeMenu(i){db.menu.splice(i,1);cloudSave();render()}
+$("groceryForm").onsubmit=e=>{e.preventDefault();db.groceries.push({item:$("groceryItem").value.trim(),qty:$("groceryQty").value,done:false});e.target.reset();cloudSave();render()};
+function toggleGrocery(i){db.groceries[i].done=!db.groceries[i].done;cloudSave();render()}
+function removeGrocery(i){db.groceries.splice(i,1);cloudSave();render()}
+$("cloudForm").onsubmit=async e=>{e.preventDefault();let url=$("supabaseUrl").value.trim(),key=$("supabaseKey").value.trim();try{if(!window.supabase)throw Error("Supabase library did not load. Check your internet connection.");supa=window.supabase.createClient(url,key);await cloudLoad();if(channel)await supa.removeChannel(channel);channel=supa.channel("room-data-live").on("postgres_changes",{event:"*",schema:"public",table:"room_data",filter:"id=eq.1"},payload=>{if(payload.new?.payload){db={...DEFAULT,...payload.new.payload};saveLocal();render()}}).subscribe();localStorage.setItem("roomsync-url",url);localStorage.setItem("roomsync-key",key);updateSync(true);render();alert("Connected. This device is now synchronised.");}catch(err){supa=null;updateSync(false);alert("Could not connect: "+err.message)}};
+$("disconnectBtn").onclick=()=>{if(channel&&supa)supa.removeChannel(channel);supa=null;channel=null;updateSync(false);alert("Cloud disconnected on this device.")};
+(async()=>{const DEF_URL="https://znoedloxzhiijkrtjuud.supabase.co",DEF_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpub2VkbG94emhpaWprcnRqdXVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1MzA4ODAsImV4cCI6MjExMTEwNjg4MH0.G_fTx0GraJCZtb_Pnb7wzuEmfnzVpTfnaUofBXMtWjk";let u=localStorage.getItem("roomsync-url")||DEF_URL,k=localStorage.getItem("roomsync-key")||DEF_KEY;if(u&&k){$("supabaseUrl").value=u;$("supabaseKey").value=k;try{if(!window.supabase)throw Error("sync library not loaded");supa=window.supabase.createClient(u,k);await cloudLoad();channel=supa.channel("room-data-live").on("postgres_changes",{event:"*",schema:"public",table:"room_data",filter:"id=eq.1"},p=>{if(p.new?.payload){db={...DEFAULT,...p.new.payload};saveLocal();render()}}).subscribe();updateSync(true)}catch(e){supa=null;updateSync(false);$("syncText").textContent="Demo mode - "+(e&&e.message?e.message:e)}}render()})();
+</script></body></html>
